@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.zerock.mapper.MemberMapper">
+
+	<resultMap type="org.zerock.domain.MemberVO" id="memberMap">
+		<id property="userid" column="userid" />
+		<result property="userid" column="userid" />
+		<result property="userpw" column="userpw" />
+		<result property="username" column="username" />
+		<result property="userphone" column="userphone" />
+		<result property="useremail" column="useremail" />
+		<result property="regdate" column="regdate" />
+		<result property="updatedate" column="updatedate" />
+		<collection property="authList" resultMap="authMap">
+		</collection>
+	</resultMap>
+
+	<resultMap type="org.zerock.domain.AuthVO" id="authMap">
+		<result property="userid" column="userid" />
+		<result property="auth" column="auth" />
+	</resultMap>
+
+	<select id="read" resultMap="memberMap">
+		SELECT
+		mem.userid, userpw, username,
+		useremail, userphone
+		enabled, regdate, updatedate, auth
+		FROM
+		tbl_member mem LEFT OUTER JOIN
+		tbl_member_auth auth on mem.userid = auth.userid
+		WHERE mem.userid =
+		#{userid}
+	</select>
+
+	<!-- 목록을 처리_ 메서드 이름이 아이디 -->
+	<!-- 매핑할 메소드 이름을 써주어야함 넘긴 타입(꼭 map 아니어도됨.자바빈도 가능) 결과값 담은 자바빈 -->
+	<select id="getMemberList" parameterType="map" resultMap="memberMap">
+		<!-- 페이징 하려면 전달할 데이터(파라미터 값)를 맵에 담아서 보내야 한다. 아니면 자바빈에 담아서 보내야함. (보낼때는 맵 
+			반환할때는 자바빈) -->
+		<!-- 자바빈은 자동스켄 해서 마이바티스에 자동 등록된다. 식별자가 소문자로 등록이 된다(별칭, 알리아스). 호출할때는 소문자로 
+			명시해야함. 반환될때 여러 데이터는 리스트형식으로 처리되지만 한 건의 데이터는 자바빈으로 처리되니 한 건의 데이터를 읽어올때는 자바빈 
+			타입 명령어와 나머지 대문자 / 컬럼명,테이블명 소문자로 구분하기로 하자. sql은 대소문자 구분이 없음 -->
+
+		SELECT
+		*
+		FROM (SELECT
+		a.*,
+		rownum rnum
+		FROM(SELECT
+		*
+		FROM tbl_member
+		ORDER BY regdate DESC)a)
+                    <![CDATA[
+                    WHERE rnum >= #{start} AND rnum <= #{end}
+                    ]]>
+		<!-- <를 태그로 인식하기때문에 그냥 실행하면 에러남. 따라서 xml문법에서 빼주고 처리함. 특별한 기호로 표시. CDATA 
+			문법체크하지 않는 영역 MemberMapper interface 와 연결 / MemberMapper 가 map 을 받아서 반환 -->
+	</select>
+
+	<!-- 아이디는 메핑되어야 하기때문에 아이디를 써줌 . 반환되는 타입 적어주기 -->
+	<select id="getMemberCount" resultType="integer">
+		SELECT
+		count(*)
+		FROM tbl_member
+	</select>
+
+	<insert id="insertMember">
+		INSERT ALL
+		INTO tbl_member(userid,userpw,username,userphone,useremail,regdate)
+		VALUES (#{userid},#{userpw},#{username},#{userphone},#{useremail},sysdate)
+		INTO tbl_member_auth(userid,auth)
+		VALUES (#{userid},'ROLE_USER')
+		SELECT * FROM DUAL
+	</insert>
+
+	<select id="getMember" resultMap="memberMap">
+		SELECT * 
+		FROM tbl_member 
+		WHERE userid = #{userid}
+	</select>
+
+	<update id="updateMember">
+		UPDATE tbl_member 
+		SET userpw=#{userpw},username=#{username} 
+		WHERE userid=#{userid}
+	</update>
+
+	<delete id="deleteMember" parameterType="string">
+		DELETE FROM tbl_member
+		WHERE userid = #{userid}
+	</delete>
+</mapper>

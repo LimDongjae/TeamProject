@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.zerock.mapper.EstimateMapper">
+
+	<sql id="criteria">
+		<trim prefix="(" suffix=") AND " prefixOverrides="OR">
+			<foreach item='type' collection="typeArr">
+				<trim prefix="OR">
+					<choose>
+						<when test="type == 'T'.toString()">
+							title like '%'||#{keyword}||'%'
+						</when>
+						<when test="type == 'C'.toString()">
+							content like '%'||#{keyword}||'%'
+						</when>
+						<when test="type == 'W'.toString()">
+							writer like '%'||#{keyword}||'%'
+						</when>
+					</choose>
+				</trim>
+			</foreach>
+		</trim>
+	</sql>
+
+	<select id="getList" resultType="org.zerock.domain.EstimateVO">
+	<![CDATA[
+		select * from tbl_estimate where eno > 0 
+	]]>
+	</select>
+
+	<insert id="insert">
+		<selectKey keyProperty="eno" order="BEFORE"	resultType="long">
+			select seq_estimate.nextval from dual
+		</selectKey>
+		insert into tbl_estimate(eno,name,phone,title,departure,arrive,move
+								,depdate,content)
+		values (#{eno},#{name},#{phone},#{title},#{departure},#{arrive},
+		#{move},to_date(#{depDate},'yyyy-MM-dd'),#{content})
+	</insert>
+
+	<insert id="insertSelectKey">
+
+		<selectKey keyProperty="eno" order="BEFORE"	resultType="long">
+			select seq_estimate.nextval from dual
+		</selectKey>
+		insert into tbl_estimate(eno,name,phone,title,departure,arrive,move,depdate,content)
+		values (#{eno},#{name},#{phone},#{title},#{departure},#{arrive},
+		#{move},#{depDate},#{content})
+	</insert>
+
+	<select id="read" resultType="org.zerock.domain.EstimateVO">
+		select * from tbl_estimate where eno =	#{eno}
+	</select>
+
+	<delete id="delete">
+		delete tbl_estimate where eno = #{eno}
+	</delete>
+
+	<update id="update">
+		update tbl_estimate
+		set
+		name= #{name},
+		phone= #{phone},
+		title= #{title},
+		departure= #{departure},
+		arrive= #{arrive},
+		move= #{move},
+		content=#{content},
+		depdate=#{depDate},
+		updateDate = sysdate,
+		status ='대기중'
+		where eno =	#{eno}
+	</update>
+
+	<select id="getListWithPaging" resultType="org.zerock.domain.EstimateVO">
+	<!-- CDATA안에 있는 특수문자는 문자로 인식한다. -->
+  	<![CDATA[
+  	select eno, name, phone, title, departure, arrive, move,depdate, content, regdate, updatedate,status
+  	from (
+      select /*+INDEX_DESC(tbl_estimate pk_estimate3) */
+        rownum rn, eno, name, phone, title, departure, arrive, move,depdate, content, regdate, updatedate,status
+      from 
+      	(select * from tbl_estimate order by updatedate desc)
+        tbl_estimate
+      where 
+  	]]>
+	<include refid="criteria"/>
+  	<![CDATA[    
+      rownum <= #{pageNum} * #{amount}
+      )
+  	where rn > (#{pageNum} -1) * #{amount}   
+  	]]>
+	</select>
+
+	<select id="getTotalCount" resultType="int">
+		select count(*) from tbl_estimate where 
+		<include refid="criteria"/> 		
+		eno > 0
+	</select>
+
+	<update id="updateReplyCnt">
+		update tbl_estimate set replycnt = replycnt + #{amount} where eno = #{eno}
+	</update>
+</mapper>

@@ -1,0 +1,19 @@
+div.dataTables_length{
+	display:none;
+}
+
+div.col-sm-6{
+	display:none;	
+}
+
+div.dataTables_info{
+	display:none;
+}
+
+div.dataTables_paginate paging_simple_numbers{
+	display:none;
+}
+
+/* .odd{ */
+/* 	display:none; */
+/* } */

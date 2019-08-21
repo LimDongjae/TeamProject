@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>  
+<!DOCTYPE mapper   
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"   
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.zerock.mapper.CompanyMapper">  <!-- 매핑되는 것을 명시해야함. -->
+
+	<resultMap type="org.zerock.domain.CompanyVO" id="companyMap">
+		<id property="compid" column="compid" />
+		<result property="compid" column="compid" />
+		<result property="comppw" column="comppw" />
+		<result property="compname" column="compname" />
+		<result property="compdate" column="compdate" />
+		<result property="compcontent" column="compcontent" />
+		<result property="compphone" column="compphone" />
+		<result property="compdomain" column="compdomain" />
+		<result property="regdate" column="regdate" />
+		<collection property="authList" resultMap="authMap">
+		</collection>
+	</resultMap>
+
+	<resultMap type="org.zerock.domain.CompanyAuthVO" id="authMap">
+		<result property="compid" column="compid" />
+		<result property="auth" column="auth" />
+	</resultMap>
+
+	<select id="read" resultMap="companyMap">
+		SELECT
+		com.compid, comppw, compname,
+		compphone, compdate, compdomain,
+		compcontent, regdate, auth
+		FROM
+		tbl_company com LEFT OUTER JOIN
+		tbl_company_auth auth on com.compid = auth.compid
+		WHERE com.compid =
+		#{compid}
+	</select>
+	
+
+	<!-- 목록을 처리_ 메서드 이름이 아이디 -->
+	<!-- 매핑할 메소드 이름을 써주어야함 넘긴 타입(꼭 map 아니어도됨.자바빈도 가능) 결과값 담은 자바빈 -->
+	<select id="getCompanyList" parameterType="map"
+		resultMap="companyMap">
+		<!-- 페이징 하려면 전달할 데이터(파라미터 값)를 맵에 담아서 보내야 한다. 아니면 자바빈에 담아서 보내야함. (보낼때는 맵 
+			반환할때는 자바빈) -->
+		<!-- 자바빈은 자동스켄 해서 마이바티스에 자동 등록된다. 식별자가 소문자로 등록이 된다(별칭, 알리아스). 호출할때는 소문자로 
+			명시해야함. 반환될때 여러 데이터는 리스트형식으로 처리되지만 한 건의 데이터는 자바빈으로 처리되니 한 건의 데이터를 읽어올때는 자바빈 
+			타입 명령어와 나머지 대문자 / 컬럼명,테이블명 소문자로 구분하기로 하자. sql은 대소문자 구분이 없음 -->
+
+		SELECT
+		*
+		FROM (SELECT
+		a.*,
+		rownum rnum
+		FROM(SELECT
+		*
+		FROM tbl_company
+		ORDER BY
+		regdate DESC)a)
+                    <![CDATA[
+                    WHERE rnum >= #{start} AND rnum <= #{end}
+                    ]]>
+		<!-- <를 태그로 인식하기때문에 그냥 실행하면 에러남. 따라서 xml문법에서 빼주고 처리함. 특별한 기호로 표시. CDATA 
+			문법체크하지 않는 영역 CompanyMapper interface 와 연결 / CompanyMapper 가 map 을 받아서 반환 -->
+	</select>
+
+	<!-- 아이디는 메핑되어야 하기때문에 아이디를 써줌 . 반환되는 타입 적어주기 -->
+	<select id="getCompanyCount" resultType="integer">
+		SELECT count(*) FROM
+		tbl_company
+	</select>
+
+	<insert id="insertCompany"
+		parameterType="org.zerock.domain.CompanyVO">
+		INSERT ALL 
+		INTO tbl_company
+		(compid,comppw,compname,compdate,compcontent,compphone,compdomain,regdate)
+		VALUES
+		(#{compid},#{comppw},#{compname},#{compdate},#{compcontent},#{compphone},#{compdomain},sysdate)
+		INTO tbl_company_auth(compid,auth)
+		VALUES (#{compid},'ROLE_COMPANY')
+		SELECT * FROM DUAL
+	</insert>
+
+	<select id="getCompany" parameterType="string"
+		resultMap="companyMap">
+		SELECT * FROM tbl_company WHERE compid=#{compid}
+	</select>
+
+	<update id="updateCompany"
+		parameterType="org.zerock.domain.CompanyVO">
+		UPDATE tbl_company SET
+		comppw=#{comppw},compname=#{compname},compdate=#{compdate},compcontent=#{compcontent},compphone=#{compphone},compdomain=#{compdomain}
+		WHERE
+		compid=#{compid}
+	</update>
+
+	<delete id="deleteCompany" parameterType="string">
+		DELETE FROM tbl_company WHERE compid=#{compid}
+	</delete>
+
+</mapper>
+
+
+
+
+
+

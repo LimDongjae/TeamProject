@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://www.springframework.org/schema/beans"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+
+	<bean id="messageSource"
+		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="basenames">
+			<list> <!-- 메세지 파일의 위치를 지정합니다. message_언어.properties 파일을 찾습니다. -->
+				<value>WEB-INF/messages/label</value>
+				<value>WEB-INF/messages/validation</value>
+			</list>
+		</property> <!-- 파일의 기본 인코딩을 지정합니다. -->
+		<property name="defaultEncoding" value="UTF-8" /> <!-- properties 파일이 변경되었는지 확인하는 주기를 지정합니다. 60초 간격으로 지정했습니다. -->
+		<property name="cacheSeconds" value="60" />
+	</bean>
+
+	<!-- MessageSource를 사용하기 위한 Accessor 설정 -->
+	<bean id="messageSourceAccessor"
+		class="org.springframework.context.support.MessageSourceAccessor">
+		<constructor-arg ref="messageSource" />
+	</bean>
+	
+	<!-- MessageSource를 사용하기위한 MessageUtils 매핑 -->
+	<bean id="message" class="org.zerock.message.MessageUtils">
+		<property name="messageSourceAccessor" ref="messageSourceAccessor" />
+	</bean>
+
+	<bean id="localeResolver"
+		class="org.springframework.web.servlet.i18n.SessionLocaleResolver">
+		<property name="defaultLocale" value="ko" />
+	</bean>
+
+</beans>

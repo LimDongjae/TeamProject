@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.zerock.mapper.CompanySearchMapper">
+
+	<select id="getList" resultType="org.zerock.domain.CompanySearchVO">
+	<![CDATA[
+		select * from tbl_company order by regdate desc
+	]]>
+	</select>
+
+	<insert id="insert">
+		insert into tbl_company(CompId, CompPw, CompName, CompPhone, CompDate, CompDomain, CompContent)
+		values (#{CompId}, #{CompPw}, #{CompName}, #{CompPhone}, #{CompDate}, #{CompDomain}, #{CompContent})
+		
+		<selectKey keyProperty="CompId" order="AFTER" resultType="String">
+			select CompId from tbl_company where CompId=#{CompId} 
+		</selectKey>
+	</insert>
+
+	<insert id="insertSelectKey" parameterType="org.zerock.domain.CompanySearchVO">
+	
+		INSERT INTO 
+		tbl_company(COMPID
+				   ,COMPPW
+				   ,COMPNAME
+				   ,COMPPHONE
+				   ,COMPDATE
+				   ,COMPDOMAIN
+				   ,COMPCONTENT)
+		VALUES (#{CompId}
+			  ,#{CompPw}
+			  ,#{CompName}
+			  ,#{CompPhone}
+			  ,#{CompDate}
+			  ,#{CompDomain}
+			  ,#{CompContent}) 
+		
+		
+	</insert>
+
+	<select id="read" resultType="org.zerock.domain.CompanySearchVO">
+		SELECT 
+			*
+		FROM 
+			tbl_Company 
+		WHERE 
+			CompId = #{CompId}
+	</select>
+
+	<delete id="delete">
+		DELETE 
+		tbl_Company 
+	    WHERE
+	     CompId = #{CompId}
+	</delete>
+
+	<update id="update">
+		UPDATE tbl_Company 
+		set 
+
+		CompName = #{CompName},
+		CompPhone = #{CompPhone},
+		CompDomain = #{CompDomain},
+		CompContent = #{CompContent},
+		updateDate = sysdate
+		WHERE CompId = #{CompId}
+	</update>
+	
+
+<!--   페이징처리 --> 
+		
+		
+		
+		<select id="getListWithPaing" resultType="org.zerock.domain.CompanySearchVO">
+
+  			SELECT  
+  			compid, 
+  			compname, 
+  			compdomain,   
+  			compcontent,  
+  			regdate  
+				
+ 			FROM 
+ 				( 
+ 				SELECT
+  				 /*+INDEX_DESC(tbl_company SYS_C) */ 
+ 					rownum rn, compid, compname, compdomain, compcontent, regdate 
+ 				FROM  
+ 					(SELECT
+ 					 * 
+ 					FROM
+ 					 tbl_company 
+ 					ORDER BY
+ 					 regdate desc)
+ 					 	 					
+ 				WHERE 
+ 					
+			 	<choose>
+							<when test="type == 'T'.toString()"> 
+							  CompId like '%'|| #{keyword}|| '%' 					
+							</when>
+							<when test="type == 'C'.toString()">
+							  CompName like '%'|| #{keyword} ||'%' 
+							</when>
+<!-- 							<when test="type == 'W'.toString()"> -->
+<!-- 					 	      CompContent like '%'|| #{keyword} ||'%'  -->
+<!-- 							</when>	 -->
+							<otherwise>
+							   1=1 
+							</otherwise>	
+										
+				</choose>
+				
+					
+			<![CDATA[
+				
+				 AND rownum <= #{pageNum} * #{amount} 
+							
+  			)   
+  			WHERE rn > (#{pageNum} -1) * #{amount} 
+			 ]]> 
+			 
+				
+<!-- 검색 기능 -->
+ 	</select>
+
+	<select id="getTotalCount" resultType="int">
+		SELECT
+		count(CompId)
+		FROM
+		tbl_company
+		WHERE 
+	 	<choose>
+					<when test="type == 'T'.toString()"> 
+					  CompId like '%'|| #{keyword}|| '%' 					
+					</when>
+					<when test="type == 'C'.toString()">
+					  CompName like '%'|| #{keyword} ||'%' 
+					</when>		
+<!-- 					<when test="type == 'W'.toString()"> -->
+<!-- 					  CompContent like '%'|| #{keyword} ||'%'  -->
+<!-- 					</when>		 -->
+					<otherwise>
+					   1=1
+					</otherwise>					
+		</choose>
+<!-- 		<include refid="criteria1"></include> -->
+		
+	</select>
+
+	<select id="getAutoSearching" resultType="org.zerock.domain.CompanyVO">
+		SELECT
+		 CompName, CompId
+		FROM
+		 tbl_company 
+	</select>
+
+
+</mapper>
